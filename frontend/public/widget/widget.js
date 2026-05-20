@@ -2,7 +2,7 @@
   console.log("🚀 Loaded Suraj AI Floating Widget");
 
   const CONFIG = window.__CHAT_WIDGET_CONFIG__ || {};
-  const API_URL = CONFIG.apiUrl || "http://127.0.0.1:8000/chat";
+  const API_URL = CONFIG.apiUrl || "https://multi-agent-ai-chatbot.onrender.com/chat";
   const BOT_NAME = CONFIG.name || "AI Student Assistant";
   const SCHOOL_SUBTITLE = CONFIG.subtitle || "Career Training School";
   const BOT_LOGO = CONFIG.logo || "./avatar.png";
@@ -10,10 +10,30 @@
   const notificationSound = new Audio(CONFIG.sound || "./notify.mp3");
   notificationSound.volume = 0.6;
 
+  /* ---------------- FORMATTER (FIXED) ---------------- */
   function formatBotMessage(text, role) {
-    if (window.__FORMAT_BOT_MESSAGE__) {
-      return window.__FORMAT_BOT_MESSAGE__(text, role);
+    if (!text) return "";
+
+    // Convert URLs → clickable links
+    text = text.replace(
+      /(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank">$1</a>'
+    );
+
+    // Convert bullet points → list
+    if (text.includes("•") || text.includes("- ")) {
+      const lines = text.split("\n").filter(l => l.trim() !== "");
+
+      const listItems = lines.map(line => {
+        return `<li>${line.replace(/^•|- /, "").trim()}</li>`;
+      }).join("");
+
+      return `<ul style="padding-left:18px; margin:8px 0;">${listItems}</ul>`;
     }
+
+    // Line breaks
+    text = text.replace(/\n/g, "<br>");
+
     return text;
   }
 
@@ -76,21 +96,18 @@
     input.disabled = lock;
   }
 
-  /* ---------------- RENDER MESSAGES ---------------- */
+  /* ---------------- RENDER ---------------- */
 
   function addBotMessage(text) {
     const el = document.createElement("div");
     el.className = "suraj-bot suraj-message";
 
-    // ✅ Always use formatter
     const formatted = formatBotMessage(text, "bot");
     el.innerHTML = formatted;
 
-    // Secure links
     el.querySelectorAll("a").forEach(link => {
       link.target = "_blank";
       link.rel = "noopener noreferrer";
-      link.classList.add("bot-link");
     });
 
     msgs.appendChild(el);
@@ -115,7 +132,6 @@
     buttons.forEach(btn => {
       const b = document.createElement("button");
       b.className = "suraj-btn";
-      b.type = "button";
       b.innerText = btn.label;
 
       b.onclick = () => {
@@ -164,7 +180,7 @@
     msgs.scrollTop = msgs.scrollHeight;
   }
 
-  /* ---------------- SEND MESSAGE ---------------- */
+  /* ---------------- API ---------------- */
 
   async function sendMessage(message) {
     if (!message) return;
@@ -188,7 +204,7 @@
 
     } catch (e) {
       hideTyping();
-      addBotMessage("⚠️ Something went wrong. Please try again.");
+      addBotMessage("⚠️ Something went wrong.");
       lockInput(false);
     }
   }
@@ -213,7 +229,27 @@
     }
   }
 
-  /* ---------------- LAUNCHER CONTROL ---------------- */
+  /* ---------------- LAUNCHER ---------------- */
+
+  const launcher = document.createElement("div");
+  launcher.className = "suraj-launcher";
+
+  launcher.innerHTML = `
+    <div class="suraj-label">Chat With Us</div>
+    <div class="suraj-circle">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="#1e3a8a">
+        <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+      </svg>
+    </div>
+  `;
+
+  document.body.appendChild(launcher);
+
+  launcher.onclick = () => {
+    window.toggleChatWidget();
+  };
+
+  /* ---------------- CONTROL ---------------- */
 
   window.toggleChatWidget = function () {
     const isOpen = chatbox.style.display === "flex";
