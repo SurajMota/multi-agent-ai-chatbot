@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Student Assistant Widget</title>
+
+  <!-- Main Styles -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    /* ------------------------------
+       Bot Message Styling
+    ------------------------------ */
+
+    .bot-link {
+      font-weight: bold;
+      color: #0A84FF;
+      text-decoration: underline;
+      word-break: break-word;
+    }
+
+    .bot-link:hover {
+      color: #005FCC;
+    }
+
+    /* Preserve line breaks safely */
+    .suraj-message,
+    .suraj-message * {
+      white-space: normal;
+    }
+
+    /* Ensure <br> spacing renders properly */
+    .suraj-message br {
+      content: "";
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* Ensure strong text looks clean */
+    .suraj-message strong {
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Load Widget Script -->
+  <script src="./embed.js?v=2"></script>
+
+</body>
+</html>
