@@ -6,9 +6,6 @@ from app.core.cache import SimpleCache
 from server.logger import log
 import re
 
-# ✅ RAGAS IMPORT
-from app.services.ragas_evaluator import evaluate_rag_response
-
 _rag_instance = None
 _cache = SimpleCache()
 
@@ -16,7 +13,6 @@ _cache = SimpleCache()
 def normalize_query(text: str) -> str:
     """
     Normalize query for stable embeddings and caching.
-    Removes punctuation, extra spaces, and lowercases.
     """
     if not text:
         return text
@@ -60,7 +56,7 @@ class RAGAgent:
         try:
             matches = await self.rag.query(
                 text=normalized_query,
-                top_k=8
+                top_k=7   # ✅ optimized
             )
         except Exception:
             log.exception("❌ RAG query failed")
@@ -81,7 +77,7 @@ class RAGAgent:
             score = m.get("score", 0)
             log.info(f"[RAG] Match score: {score}")
 
-            if score >= 0.65:
+            if score >= 0.60:
                 strong_matches.append(m)
             elif score >= 0.50:
                 weak_matches.append(m)
@@ -115,7 +111,7 @@ class RAGAgent:
             )
 
             if text:
-                snippets.append(text[:1500])
+                snippets.append(text[:400])   # ✅ optimized (was 1500)
 
         if not snippets:
             log.info("[RAG] No metadata content")
@@ -124,49 +120,34 @@ class RAGAgent:
         context_text = "\n\n".join(snippets)
 
         # ------------------------------------------------
-        # 5️⃣ GROUNDED LLM GENERATION
+        # 5️⃣ GROUNDED LLM GENERATION (IMPROVED PROMPT)
         # ------------------------------------------------
         prompt = f"""
-You are a helpful assistant for NY Medical Training.
+You are an AI assistant for NY Medical Training.
 
-Rules:
-- Answer ONLY using the provided context.
-- If the answer is not clearly present, say you don't have that information.
-- PRESERVE the original formatting from the context.
-- If the context contains bullet points or lists, return them exactly as-is.
-- Do NOT rewrite structured lists into paragraphs.
-- Do NOT invent information.
+STRICT RULES:
+- Answer ONLY from the provided context
+- DO NOT add any extra information
+- DO NOT guess or assume anything
+- If answer is not clearly in context, say: "I don't have that information"
+- Keep answers short and precise
+- Preserve bullet points and formatting exactly
 
 Context:
 {context_text}
 
 Question:
-{normalized_query}
+{raw_query}
+
+Answer:
 """
 
         try:
             reply = await llm_model().acomplete(prompt)
             reply = reply.strip()
 
-            # 🔎 DEBUG: raw output
+            # 🔎 Debug output
             log.info(f"[RAG RAW OUTPUT REPR]: {repr(reply)}")
-
-            # ------------------------------------------------
-            # 🔥 RAGAS EVALUATION (ADDED)
-            # ------------------------------------------------
-            try:
-                contexts = snippets  # already extracted
-
-                scores = evaluate_rag_response(
-                    question=raw_query,
-                    answer=reply,
-                    contexts=contexts
-                )
-
-                log.info(f"📊 RAGAS Scores: {scores}")
-
-            except Exception as e:
-                log.error(f"RAGAS evaluation failed: {e}")
 
             # ------------------------------------------------
             # 6️⃣ SAFE CACHE

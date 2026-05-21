@@ -1,58 +1,96 @@
-# Ignore environment variables
+# ================================
+# 🔐 ENV & SECRETS
+# ================================
 .env
+.env.*
 backend/.env
 backend/.env.*
+*.env
 
-# Ignore credentials
+# Credentials
 credentials.json
 backend/credentials.json
+*.pem
+*.key
 
-# Ignore Python cache
+# ================================
+# 🐍 PYTHON
+# ================================
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.sqlite3
 
-# Ignore virtual environment
+# Virtual Environments
 venv/
 .venv/
+env/
 
-# Ignore build and distribution folders
+# Build / Distribution
 dist/
 build/
 *.egg-info/
+.eggs/
 
-# Ignore logs
+# ================================
+# 📊 DATA / OUTPUT FILES
+# ================================
+ragas_results.csv
+*.csv
+*.xlsx
+*.parquet
+
+# (Optional: keep sample data)
+!sample_data.csv
+
+# ================================
+# 🧾 LOGS
+# ================================
 *.log
 *.db
 logs/
 backend/app/logs/
 backend/tools/logs/
 
-# Ignore node modules (frontend)
+# ================================
+# 🌐 FRONTEND
+# ================================
 node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.next/
 frontend/out/
 
-# Ignore editor settings
-.vscode/
-.idea/
-
-# Ignore OS files
-.DS_Store
-Thumbs.db
-
-# Ignore temporary files
+# ================================
+# 🧠 CACHE / TEMP
+# ================================
+.cache/
+.tmp/
 *.tmp
 *.temp
 
-# Ignore backup files
-*.bak
-*.old
+# ================================
+# 💻 EDITOR / IDE
+# ================================
+.vscode/
+.idea/
 
-# Ignore yarn/pnpm/npm lock files optionally
+# ================================
+# 🖥️ OS FILES
+# ================================
+.DS_Store
+Thumbs.db
+
+# ================================
+# 📦 PACKAGE LOCK FILES (OPTIONAL)
+# ================================
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# ================================
+# 🚀 OPTIONAL (DEPLOYMENT)
+# ================================
+.render/
+.vercel/
