@@ -6,6 +6,9 @@ from app.core.cache import SimpleCache
 from server.logger import log
 import re
 
+# ✅ RAGAS IMPORT
+from app.services.ragas_evaluator import evaluate_rag_response
+
 _rag_instance = None
 _cache = SimpleCache()
 
@@ -36,7 +39,7 @@ class RAGAgent:
     async def run(self, session_id: str, message: str, memory=None, **kwargs):
 
         # ------------------------------------------------
-        # 🔥 NORMALIZATION (NEW - FIXES ? ISSUE)
+        # 🔥 NORMALIZATION
         # ------------------------------------------------
         raw_query = message.strip()
         normalized_query = normalize_query(raw_query)
@@ -52,7 +55,7 @@ class RAGAgent:
             return cached
 
         # ------------------------------------------------
-        # 2️⃣ VECTOR SEARCH (using normalized query)
+        # 2️⃣ VECTOR SEARCH
         # ------------------------------------------------
         try:
             matches = await self.rag.query(
@@ -68,7 +71,7 @@ class RAGAgent:
             return None
 
         # ------------------------------------------------
-        # 3️⃣ SIMILARITY FILTER (Slightly more tolerant)
+        # 3️⃣ SIMILARITY FILTER
         # ------------------------------------------------
         strong_matches = []
         weak_matches = []
@@ -78,11 +81,11 @@ class RAGAgent:
             score = m.get("score", 0)
             log.info(f"[RAG] Match score: {score}")
 
-            if score >= 0.65:          # slightly reduced from 0.70
+            if score >= 0.65:
                 strong_matches.append(m)
             elif score >= 0.50:
                 weak_matches.append(m)
-            elif score >= 0.35:        # slightly reduced fallback
+            elif score >= 0.35:
                 fallback_matches.append(m)
 
         if strong_matches:
@@ -144,9 +147,27 @@ Question:
         try:
             reply = await llm_model().acomplete(prompt)
             reply = reply.strip()
-            
-            # 🔎 DEBUG: check formatting EXACTLY as returned
+
+            # 🔎 DEBUG: raw output
             log.info(f"[RAG RAW OUTPUT REPR]: {repr(reply)}")
+
+            # ------------------------------------------------
+            # 🔥 RAGAS EVALUATION (ADDED)
+            # ------------------------------------------------
+            try:
+                contexts = snippets  # already extracted
+
+                scores = evaluate_rag_response(
+                    question=raw_query,
+                    answer=reply,
+                    contexts=contexts
+                )
+
+                log.info(f"📊 RAGAS Scores: {scores}")
+
+            except Exception as e:
+                log.error(f"RAGAS evaluation failed: {e}")
+
             # ------------------------------------------------
             # 6️⃣ SAFE CACHE
             # ------------------------------------------------
